@@ -7,7 +7,7 @@ This repository contains 3D graphics demonstrations.
 ### Project 2: Barn Field Interactive Scene (WebGL2)
 
 An implementation of an interactive 3D scene using WebGL2, providing a lower-level approach to 3D graphics rendering. This project demonstrates direct WebGL2 programming, including shader management, geometry handling, and matrix transformations. 
-**link:** [Barn Field Interactive Scene (WebGL2)](https://jiesli.github.io/computer-graphics-course-demos/proj2_barn_field_interact_webgl2/)
+**link:** [Barn Field Interactive Scene (WebGL2)](https://jiesli.github.io/computer-graphics-course-demos-v2/proj2_barn_field_interact_webgl2/)
 
 ## Local Development
 
