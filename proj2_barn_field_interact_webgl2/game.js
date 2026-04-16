@@ -30,8 +30,8 @@ for (let i = 0; i < playerVertCount; i++) {
 }
 const playerArrays = {
   a_position: playerBaseArrays.a_position,
-  a_color:    { numComponents: 3, data: blueColors },
-  indices:    playerBaseArrays.indices,
+  a_color: { numComponents: 3, data: blueColors },
+  indices: playerBaseArrays.indices,
 };
 
 // Mesh handles (bufferInfo + VAO), created in main()
@@ -57,8 +57,8 @@ scene.objects.push(tree, barn);
 // --- Input ---
 
 const keys = {};
-window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup",   e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
+window.addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
 
 // --- Helpers ---
 
@@ -86,10 +86,13 @@ function updatePlayer() {
 
   // TODO: Handle "a" key — rotate left (increase p.rotation by p.rotationSpeed)
   // TODO: Handle "d" key — rotate right (decrease p.rotation by p.rotationSpeed)
+  if (keys["a"]) p.rotation += p.rotationSpeed;
+  if (keys["d"]) p.rotation -= p.rotationSpeed;
 
   let forward = 0;
   // TODO: Handle "w" key — move forward (set forward = 1)
   if (keys["s"]) forward = -1;
+  if (keys["w"]) forward = 1;
 
   if (forward !== 0) {
     const dir = forwardVector(p.rotation);
@@ -157,7 +160,12 @@ function renderPlayer(viewProj) {
 
 function renderTree(viewProj) {
   let world = m4.identity();
-  world = m4.translate(world, tree.position[0], tree.position[1], tree.position[2]);
+  world = m4.translate(
+    world,
+    tree.position[0],
+    tree.position[1],
+    tree.position[2],
+  );
   drawMesh(tree.trunkMesh, world, viewProj);
 
   world = m4.identity();
@@ -167,7 +175,12 @@ function renderTree(viewProj) {
 
 function renderBarn(viewProj) {
   let world = m4.identity();
-  world = m4.translate(world, barn.position[0], barn.position[1], barn.position[2]);
+  world = m4.translate(
+    world,
+    barn.position[0],
+    barn.position[1],
+    barn.position[2],
+  );
   drawMesh(barn.mesh, world, viewProj);
 }
 
@@ -191,7 +204,11 @@ function animate() {
   const cam = computeCamera();
   const view = m4.inverse(m4.lookAt(cam.position, cam.target, [0, 1, 0]));
   const proj = m4.perspective(
-    Math.PI / 3, gl.canvas.width / gl.canvas.height, 0.1, 1000);
+    Math.PI / 3,
+    gl.canvas.width / gl.canvas.height,
+    0.1,
+    1000,
+  );
   const viewProj = m4.multiply(proj, view);
 
   renderGround(viewProj);
@@ -212,18 +229,20 @@ function main() {
     return;
   }
 
-  programInfo = twgl.createProgramInfo(gl,
-    [vertexShaderSource, fragmentShaderSource]);
+  programInfo = twgl.createProgramInfo(gl, [
+    vertexShaderSource,
+    fragmentShaderSource,
+  ]);
 
   gl.useProgram(programInfo.program);
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.CULL_FACE);
 
-  groundMesh      = createMesh(groundArrays);
-  playerMesh      = createMesh(playerArrays);
-  tree.trunkMesh  = createMesh(treeTrunkArrays);
+  groundMesh = createMesh(groundArrays);
+  playerMesh = createMesh(playerArrays);
+  tree.trunkMesh = createMesh(treeTrunkArrays);
   tree.canopyMesh = createMesh(treeCanopyArrays);
-  barn.mesh       = createMesh(barnArrays);
+  barn.mesh = createMesh(barnArrays);
 
   animate();
 }
