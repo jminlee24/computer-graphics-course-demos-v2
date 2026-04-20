@@ -3,6 +3,7 @@
 let gl;
 let mainProgramInfo;
 let texProgramInfo;
+let specProgramInfo;
 
 const scene = {
   player: {
@@ -68,6 +69,19 @@ const box = {
 scene.objects.push(tree, barn, box);
 
 // Light sources
+let selectedLight = "point";
+const lights = {
+  point: {
+    position: [10, 10, -2],
+  },
+  spot: {
+    position: [25, 10, 10],
+    dir: [-1, -1, -1],
+  },
+  directional: {
+    dir: [10, 10, 10],
+  },
+};
 
 // --- Input ---
 
@@ -104,10 +118,12 @@ function drawMesh(mesh, worldMatrix, viewProjMatrix, programInfo) {
     u_invtr_world: m4.transpose(m4.inverse(worldMatrix)),
   });
   twgl.setUniforms(programInfo, { u_texture: boxTexture });
-  twgl.setUniforms(programInfo, { u_spotlightPos: [25.0, 10.0, 10.0] });
-  twgl.setUniforms(programInfo, { u_spotlightDir: [-10.0, 10.0, 10.0] });
-  twgl.setUniforms(programInfo, { u_pointlightPos: [10.0, 10.0, -2.0] });
-  twgl.setUniforms(programInfo, { u_dirlightDir: [10.0, 10.0, 10.0] });
+  twgl.setUniforms(programInfo, { u_spotlightPos: lights.spot.position });
+  twgl.setUniforms(programInfo, { u_spotlightDir: lights.spot.dir });
+  twgl.setUniforms(programInfo, { u_pointlightPos: lights.point.position });
+  twgl.setUniforms(programInfo, { u_dirlightDir: lights.directional.dir });
+  twgl.setUniforms(programInfo, { u_shininess: 32.0 });
+  twgl.setUniforms(programInfo, { u_viewPos: computeCamera().position });
   twgl.drawBufferInfo(gl, mesh.bufferInfo);
 }
 
@@ -162,6 +178,41 @@ function collides(pos, radius) {
     }
   }
   return false;
+}
+
+// Light Controls
+window.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
+function updateLights() {
+  if (keys["1"]) {
+    selectedLight = "point";
+  }
+  if (keys["2"]) {
+    selectedLight = "directional";
+  }
+  if (keys["3"]) {
+    selectedLight = "spot";
+  }
+
+  let active = lights[selectedLight];
+  document.getElementById("selectedLight").innerText = selectedLight;
+
+  if (selectedLight != "directional") {
+    if (keys["i"]) active.position[2] -= 5;
+    if (keys["k"]) active.position[2] += 5;
+    if (keys["j"]) active.position[0] -= 5;
+    if (keys["l"]) active.position[0] += 5;
+    if (keys["u"]) active.position[1] += 5;
+    if (keys["o"]) active.position[1] -= 5;
+  } else {
+    if (keys["i"]) active.dir[2] -= 5;
+    if (keys["k"]) active.dir[2] += 5;
+    if (keys["j"]) active.dir[0] -= 5;
+    if (keys["l"]) active.dir[0] += 5;
+    if (keys["u"]) active.dir[1] += 5;
+    if (keys["o"]) active.dir[1] -= 5;
+  }
 }
 
 // --- Camera ---
@@ -238,6 +289,7 @@ function renderGround(viewProj) {
 
 function animate() {
   updatePlayer();
+  updateLights();
 
   twgl.resizeCanvasToDisplaySize(gl.canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -284,13 +336,18 @@ function main() {
     textureShaderSource,
   ]);
 
+  specProgramInfo = twgl.createProgramInfo(gl, [
+    vertexShaderSource,
+    specularShaderSource,
+  ]);
+
   gl.useProgram(mainProgramInfo.program);
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.CULL_FACE);
 
-  groundMesh = createMesh(groundArrays, mainProgramInfo);
+  groundMesh = createMesh(groundArrays, specProgramInfo);
   playerMesh = createMesh(playerArrays, mainProgramInfo);
-  tree.trunkMesh = createMesh(treeTrunkArrays, mainProgramInfo);
+  tree.trunkMesh = createMesh(treeTrunkArrays, specProgramInfo);
   tree.canopyMesh = createMesh(treeCanopyArrays, mainProgramInfo);
   barn.mesh = createMesh(barnArrays, mainProgramInfo);
   box.mesh = createMesh(boxArrays, texProgramInfo);

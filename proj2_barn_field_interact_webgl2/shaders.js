@@ -90,6 +90,8 @@ uniform vec3 u_pointlightPos;
 uniform vec3 u_spotlightDir;
 uniform vec3 u_spotlightPos;
 uniform vec3 u_dirlightDir;
+uniform vec3 u_viewPos;
+uniform float u_shininess;
 
 in vec3 v_color;
 in vec3 v_normal;
@@ -101,14 +103,19 @@ out vec4 outColor;
 uniform sampler2D u_texture;
 
 vec3 pointlight(){
+  vec3 viewDir = normalize(u_viewPos - world_pos);
   vec3 s2l = normalize(u_pointlightPos - world_pos);
-  float light = dot(s2l, normalize(v_normal));
 
-  return vec3(v_color * light);
+  vec3 reflDir = reflect(-s2l, v_normal);
+  float spec = pow(max(dot(viewDir, reflDir), 0.0), u_shininess);
+  float diff = dot(s2l, normalize(v_normal));
+
+  return vec3(v_color * (spec + diff));
 }
 
 vec3 spotlight(){
   vec3 s2l = normalize(u_spotlightPos - world_pos);
+
 
   float dir = dot(s2l, normalize(u_spotlightDir));
   float light = 0.0;
@@ -121,9 +128,13 @@ vec3 spotlight(){
 }
 
 vec3 dirlight(){
-  float light = max(dot(normalize(v_normal), -normalize(u_dirlightDir)), .3);
+  vec3 viewDir = normalize(u_viewPos - world_pos);
 
-  return vec3(v_color * light);
+  vec3 reflDir = reflect(-normalize(u_dirlightDir), v_normal);
+  float spec = pow(max(dot(viewDir, reflDir), 0.0), u_shininess);
+  float diff = max(dot(normalize(v_normal), -normalize(u_dirlightDir)), .3);
+
+  return vec3(v_color * (spec + diff));
 }
 
 void main(){
