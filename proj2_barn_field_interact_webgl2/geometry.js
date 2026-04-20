@@ -44,6 +44,10 @@ function makeSquare() {
       data: [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
     },
     indices: [0, 2, 1, 0, 3, 2],
+    a_tex: {
+      numComponents: 2,
+      data: [0, 0, 0, 0, 0, 0, 0, 0],
+    },
   };
 }
 
@@ -119,15 +123,14 @@ function makeCylinder(segments, height, radius) {
     indices.push(b1, t0, t1);
   }
 
-  console.log(segments);
-  console.log(bottomStart * 3, topStart * 3);
-  console.log(positions);
-  console.log(normals);
+  const numVerts = positions.length / 3;
+  const texZeros = new Array(numVerts * 2).fill(0);
 
   return {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
     a_normal: { numComponents: 3, data: normals },
+    a_tex: { numComponents: 2, data: texZeros },
     indices: indices,
   };
 }
@@ -170,10 +173,14 @@ function makeSphere(segments, radius) {
     }
   }
 
+  const numVerts = positions.length / 3;
+  const texZeros = new Array(numVerts * 2).fill(0);
+
   return {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
     a_normal: { numComponents: 3, data: normals },
+    a_tex: { numComponents: 2, data: texZeros },
     indices: indices,
   };
 }
@@ -270,12 +277,17 @@ function makeBox(width, height, depth) {
     colors.push(0.698, 0.133, 0.133);
   }
 
+  const texCoords = [];
+  for (let i = 0; i < 6; i++) {
+    texCoords.push(1, 1, 0, 1, 1, 0, 0, 0);
+  }
+
   const normals = [];
   const indNormals = [
     [0, 0, 1],
     [0, 0, -1],
     [0, 1, 0],
-    [, 0, -1, 0],
+    [0, -1, 0],
     [1, 0, 0],
     [-1, 0, 0],
   ];
@@ -295,6 +307,7 @@ function makeBox(width, height, depth) {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
     a_normal: { numComponents: 3, data: normals },
+    a_tex: { numComponents: 2, data: texCoords },
     indices: indices,
   };
 }
@@ -415,10 +428,14 @@ function makeBarn() {
     [1, 1, 0],
   );
 
+  const numVerts = positions.length / 3;
+  const texZeros = new Array(numVerts * 2).fill(0);
+
   return {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
     a_normal: { numComponents: 3, data: normals },
+    a_tex: { numComponents: 2, data: texZeros },
     indices: indices,
   };
 }

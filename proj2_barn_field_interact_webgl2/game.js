@@ -32,12 +32,14 @@ for (let i = 0; i < playerVertCount; i++) {
 const playerArrays = {
   a_position: playerBaseArrays.a_position,
   a_normal: playerBaseArrays.a_normal,
+  a_tex: playerBaseArrays.a_tex,
   a_color: { numComponents: 3, data: blueColors },
   indices: playerBaseArrays.indices,
 };
 
 // Mesh handles (bufferInfo + VAO), created in main()
 let groundMesh, playerMesh;
+let boxTexture = null;
 
 const tree = {
   id: "tree",
@@ -101,7 +103,8 @@ function drawMesh(mesh, worldMatrix, viewProjMatrix) {
   twgl.setUniforms(programInfo, {
     u_invtr_world: m4.transpose(m4.inverse(worldMatrix)),
   });
-  twgl.setUniforms(programInfo, { u_lightPos: [10.0, 100.0, 10.0] });
+  twgl.setUniforms(programInfo, { u_lightPos: [10.0, 10.0, 10.0] });
+  twgl.setUniforms(programInfo, { u_lightDir: [10.0, 10.0, 10.0] });
   twgl.drawBufferInfo(gl, mesh.bufferInfo);
 }
 
@@ -270,7 +273,7 @@ function main() {
 
   programInfo = twgl.createProgramInfo(gl, [
     vertexShaderSource,
-    pointShaderSource,
+    spotShaderSource,
   ]);
 
   gl.useProgram(programInfo.program);
