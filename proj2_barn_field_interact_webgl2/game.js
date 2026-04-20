@@ -21,6 +21,7 @@ const playerBaseArrays = makeCylinder(16, 8, 2);
 const treeTrunkArrays = makeCylinder(12, 15, 2);
 const treeCanopyArrays = makeSphere(16, 8);
 const barnArrays = makeBarn();
+const boxArrays = makeBox(10, 10, 10);
 
 // Override cylinder colors to blue for the player
 const playerVertCount = playerBaseArrays.a_position.data.length / 3;
@@ -52,7 +53,26 @@ const barn = {
   mesh: null,
 };
 
-scene.objects.push(tree, barn);
+const box = {
+  id: "box",
+  position: [60, 5, -40],
+  radius: 10,
+  mesh: null,
+};
+
+scene.objects.push(tree, barn, box);
+
+// Light sources
+
+const light1 = {
+  id: "spot",
+};
+const light2 = {
+  id: "point",
+};
+const light3 = {
+  id: "directional",
+};
 
 // --- Input ---
 
@@ -76,6 +96,7 @@ function drawMesh(mesh, worldMatrix, viewProjMatrix) {
   const matrix = m4.multiply(viewProjMatrix, worldMatrix);
   gl.bindVertexArray(mesh.vao);
   twgl.setUniforms(programInfo, { u_matrix: matrix });
+  twgl.setUniforms(programInfo, { u_lightDir: [1.0, 0.0, 0.0] });
   twgl.drawBufferInfo(gl, mesh.bufferInfo);
 }
 
@@ -184,6 +205,20 @@ function renderBarn(viewProj) {
   drawMesh(barn.mesh, world, viewProj);
 }
 
+function renderBox(viewProj) {
+  let world = m4.identity();
+  world = m4.translate(
+    world,
+    box.position[0],
+    box.position[1],
+    box.position[2],
+  );
+
+  drawMesh(box.mesh, world, viewProj);
+
+  console.log(box);
+}
+
 function renderGround(viewProj) {
   let world = m4.identity();
   world = m4.scale(world, scene.ground.size, 1, scene.ground.size);
@@ -214,6 +249,7 @@ function animate() {
   renderGround(viewProj);
   renderTree(viewProj);
   renderBarn(viewProj);
+  renderBox(viewProj);
   renderPlayer(viewProj);
 
   requestAnimationFrame(animate);
@@ -231,7 +267,7 @@ function main() {
 
   programInfo = twgl.createProgramInfo(gl, [
     vertexShaderSource,
-    fragmentShaderSource,
+    directionalShaderSource,
   ]);
 
   gl.useProgram(programInfo.program);
@@ -243,6 +279,7 @@ function main() {
   tree.trunkMesh = createMesh(treeTrunkArrays);
   tree.canopyMesh = createMesh(treeCanopyArrays);
   barn.mesh = createMesh(barnArrays);
+  box.mesh = createMesh(boxArrays);
 
   animate();
 }
