@@ -31,6 +31,7 @@ for (let i = 0; i < playerVertCount; i++) {
 }
 const playerArrays = {
   a_position: playerBaseArrays.a_position,
+  a_normal: playerBaseArrays.a_normal,
   a_color: { numComponents: 3, data: blueColors },
   indices: playerBaseArrays.indices,
 };
@@ -95,8 +96,12 @@ function createMesh(arrays) {
 function drawMesh(mesh, worldMatrix, viewProjMatrix) {
   const matrix = m4.multiply(viewProjMatrix, worldMatrix);
   gl.bindVertexArray(mesh.vao);
+  twgl.setUniforms(programInfo, { u_world: worldMatrix });
   twgl.setUniforms(programInfo, { u_matrix: matrix });
-  twgl.setUniforms(programInfo, { u_lightDir: [1.0, 0.0, 0.0] });
+  twgl.setUniforms(programInfo, {
+    u_invtr_world: m4.transpose(m4.inverse(worldMatrix)),
+  });
+  twgl.setUniforms(programInfo, { u_lightPos: [10.0, 100.0, 10.0] });
   twgl.drawBufferInfo(gl, mesh.bufferInfo);
 }
 
@@ -215,8 +220,6 @@ function renderBox(viewProj) {
   );
 
   drawMesh(box.mesh, world, viewProj);
-
-  console.log(box);
 }
 
 function renderGround(viewProj) {
@@ -267,7 +270,7 @@ function main() {
 
   programInfo = twgl.createProgramInfo(gl, [
     vertexShaderSource,
-    directionalShaderSource,
+    pointShaderSource,
   ]);
 
   gl.useProgram(programInfo.program);

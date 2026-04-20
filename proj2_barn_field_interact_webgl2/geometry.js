@@ -60,19 +60,24 @@ function makeCylinder(segments, height, radius) {
   colors.push(0.545, 0.271, 0.075);
   for (let i = 0; i <= segments; i++) {
     const angle = (i / segments) * Math.PI * 2;
-    positions.push(radius * Math.cos(angle), 0, radius * Math.sin(angle));
-    normals.push(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+    const x = Math.cos(angle);
+    const z = Math.sin(angle);
+    positions.push(radius * x, 0, radius * z);
+    normals.push(0, -1, 0);
     colors.push(0.545, 0.271, 0.075);
   }
 
   // Top cap
   positions.push(0, height, 0);
+  normals.push(0, 1, 0);
   colors.push(0.545, 0.271, 0.075);
   const topCenterIndex = segments + 2;
   for (let i = 0; i <= segments; i++) {
     const angle = (i / segments) * Math.PI * 2;
-    positions.push(radius * Math.cos(angle), height, radius * Math.sin(angle));
-    normals.push(radius * Math.cos(angle), height, radius * Math.sin(angle));
+    const x = Math.cos(angle);
+    const z = Math.sin(angle);
+    positions.push(radius * x, height, radius * z);
+    normals.push(0, 1, 0);
     colors.push(0.545, 0.271, 0.075);
   }
 
@@ -84,8 +89,27 @@ function makeCylinder(segments, height, radius) {
     indices.push(topCenterIndex, topCenterIndex + i + 1, topCenterIndex + i);
   }
 
-  const bottomStart = 1;
-  const topStart = topCenterIndex + 1;
+  for (let i = 0; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI * 2;
+    const x = Math.cos(angle);
+    const z = Math.sin(angle);
+    positions.push(radius * x, 0, radius * z);
+    normals.push(x, 0, z);
+    colors.push(0.545, 0.271, 0.075);
+  }
+
+  for (let i = 0; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI * 2;
+    const x = Math.cos(angle);
+    const z = Math.sin(angle);
+    positions.push(radius * x, height, radius * z);
+    normals.push(x, 0, z);
+    colors.push(0.545, 0.271, 0.075);
+  }
+
+  const bottomStart = 2 + 2 * (segments + 1);
+  const topStart = 2 + 3 * (segments + 1);
+
   for (let i = 0; i < segments; i++) {
     const b0 = bottomStart + i;
     const b1 = bottomStart + i + 1;
@@ -95,10 +119,15 @@ function makeCylinder(segments, height, radius) {
     indices.push(b1, t0, t1);
   }
 
+  console.log(segments);
+  console.log(bottomStart * 3, topStart * 3);
+  console.log(positions);
+  console.log(normals);
+
   return {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
-    a_normals: { numComponents: 3, data: normals },
+    a_normal: { numComponents: 3, data: normals },
     indices: indices,
   };
 }
@@ -144,6 +173,7 @@ function makeSphere(segments, radius) {
   return {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
+    a_normal: { numComponents: 3, data: normals },
     indices: indices,
   };
 }
@@ -388,7 +418,7 @@ function makeBarn() {
   return {
     a_position: { numComponents: 3, data: positions },
     a_color: { numComponents: 3, data: colors },
-    a_normals: { numComponents: 3, data: normals },
+    a_normal: { numComponents: 3, data: normals },
     indices: indices,
   };
 }
