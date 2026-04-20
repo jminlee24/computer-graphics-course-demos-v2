@@ -1,6 +1,8 @@
 "use strict";
 
-let gl, programInfo;
+let gl;
+let mainProgramInfo;
+let texProgramInfo;
 
 const scene = {
   player: {
@@ -67,16 +69,6 @@ scene.objects.push(tree, barn, box);
 
 // Light sources
 
-const light1 = {
-  id: "spot",
-};
-const light2 = {
-  id: "point",
-};
-const light3 = {
-  id: "directional",
-};
-
 // --- Input ---
 
 const keys = {};
@@ -89,22 +81,33 @@ function forwardVector(rotation) {
   return [Math.sin(rotation), 0, Math.cos(rotation)];
 }
 
-function createMesh(arrays) {
+function createMesh(arrays, programInfo) {
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
   const vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
   return { bufferInfo, vao };
 }
 
-function drawMesh(mesh, worldMatrix, viewProjMatrix) {
+function createMeshForProgram(program, arrays) {
+  const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+  const vao = twgl.createVAOFromBufferInfo(gl, program, bufferInfo);
+  return { bufferInfo, vao };
+}
+
+function drawMesh(mesh, worldMatrix, viewProjMatrix, programInfo) {
+  gl.useProgram(programInfo.program);
   const matrix = m4.multiply(viewProjMatrix, worldMatrix);
   gl.bindVertexArray(mesh.vao);
+
   twgl.setUniforms(programInfo, { u_world: worldMatrix });
   twgl.setUniforms(programInfo, { u_matrix: matrix });
   twgl.setUniforms(programInfo, {
     u_invtr_world: m4.transpose(m4.inverse(worldMatrix)),
   });
-  twgl.setUniforms(programInfo, { u_lightPos: [10.0, 10.0, 10.0] });
-  twgl.setUniforms(programInfo, { u_lightDir: [10.0, 10.0, 10.0] });
+  twgl.setUniforms(programInfo, { u_texture: boxTexture });
+  twgl.setUniforms(programInfo, { u_spotlightPos: [25.0, 10.0, 10.0] });
+  twgl.setUniforms(programInfo, { u_spotlightDir: [-10.0, 10.0, 10.0] });
+  twgl.setUniforms(programInfo, { u_pointlightPos: [10.0, 10.0, -2.0] });
+  twgl.setUniforms(programInfo, { u_dirlightDir: [10.0, 10.0, 10.0] });
   twgl.drawBufferInfo(gl, mesh.bufferInfo);
 }
 
@@ -184,7 +187,7 @@ function renderPlayer(viewProj) {
   let world = m4.identity();
   world = m4.translate(world, p.position[0], p.position[1], p.position[2]);
   world = m4.yRotate(world, p.rotation);
-  drawMesh(playerMesh, world, viewProj);
+  drawMesh(playerMesh, world, viewProj, mainProgramInfo);
 }
 
 function renderTree(viewProj) {
@@ -195,11 +198,11 @@ function renderTree(viewProj) {
     tree.position[1],
     tree.position[2],
   );
-  drawMesh(tree.trunkMesh, world, viewProj);
+  drawMesh(tree.trunkMesh, world, viewProj, mainProgramInfo);
 
   world = m4.identity();
   world = m4.translate(world, tree.position[0], 15, tree.position[2]);
-  drawMesh(tree.canopyMesh, world, viewProj);
+  drawMesh(tree.canopyMesh, world, viewProj, mainProgramInfo);
 }
 
 function renderBarn(viewProj) {
@@ -210,7 +213,7 @@ function renderBarn(viewProj) {
     barn.position[1],
     barn.position[2],
   );
-  drawMesh(barn.mesh, world, viewProj);
+  drawMesh(barn.mesh, world, viewProj, mainProgramInfo);
 }
 
 function renderBox(viewProj) {
@@ -222,13 +225,13 @@ function renderBox(viewProj) {
     box.position[2],
   );
 
-  drawMesh(box.mesh, world, viewProj);
+  drawMesh(box.mesh, world, viewProj, texProgramInfo);
 }
 
 function renderGround(viewProj) {
   let world = m4.identity();
   world = m4.scale(world, scene.ground.size, 1, scene.ground.size);
-  drawMesh(groundMesh, world, viewProj);
+  drawMesh(groundMesh, world, viewProj, mainProgramInfo);
 }
 
 // --- Animation Loop ---
@@ -271,21 +274,28 @@ function main() {
     return;
   }
 
-  programInfo = twgl.createProgramInfo(gl, [
+  mainProgramInfo = twgl.createProgramInfo(gl, [
     vertexShaderSource,
-    spotShaderSource,
+    diffuseShaderSource,
   ]);
 
-  gl.useProgram(programInfo.program);
+  texProgramInfo = twgl.createProgramInfo(gl, [
+    vertexShaderSource,
+    textureShaderSource,
+  ]);
+
+  gl.useProgram(mainProgramInfo.program);
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.CULL_FACE);
 
-  groundMesh = createMesh(groundArrays);
-  playerMesh = createMesh(playerArrays);
-  tree.trunkMesh = createMesh(treeTrunkArrays);
-  tree.canopyMesh = createMesh(treeCanopyArrays);
-  barn.mesh = createMesh(barnArrays);
-  box.mesh = createMesh(boxArrays);
+  groundMesh = createMesh(groundArrays, mainProgramInfo);
+  playerMesh = createMesh(playerArrays, mainProgramInfo);
+  tree.trunkMesh = createMesh(treeTrunkArrays, mainProgramInfo);
+  tree.canopyMesh = createMesh(treeCanopyArrays, mainProgramInfo);
+  barn.mesh = createMesh(barnArrays, mainProgramInfo);
+  box.mesh = createMesh(boxArrays, texProgramInfo);
+
+  boxTexture = twgl.createTexture(gl, { src: "./img.jpg" });
 
   animate();
 }

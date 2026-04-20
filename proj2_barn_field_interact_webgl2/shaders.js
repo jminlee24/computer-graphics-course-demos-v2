@@ -16,6 +16,7 @@ uniform mat4 u_invtr_world;
 out vec3 v_color;
 out vec3 v_normal;
 out vec3 world_pos;
+out vec2 v_tex;
 
 void main() {
   world_pos = (u_world * a_position).xyz;
@@ -26,47 +27,113 @@ void main() {
 }
 `;
 
-const directionalShaderSource = `
+const diffuseShaderSource = `
 #version 300 es
 precision highp float;
 
-uniform vec3 u_lightDir;
-
-in vec3 v_color;
-in vec3 world_p0s;
-in vec3 v_normal;
-out vec4 outColor;
-
-void main() {
-  vec3 normal = v_normal;
-  float light = max(dot(normal, -normalize(u_lightDir)), .3);
-  outColor = vec4(v_color * light, 1.0);
-}
-`;
-
-const spotShaderSource = `
-#version 300 es
-precision highp float;
-
-uniform vec3 u_lightDir;
-uniform vec3 u_lightPos;
+uniform vec3 u_pointlightPos;
+uniform vec3 u_spotlightDir;
+uniform vec3 u_spotlightPos;
+uniform vec3 u_dirlightDir;
 
 in vec3 v_color;
 in vec3 v_normal;
+in vec2 v_tex;
 in vec3 world_pos;
 
 out vec4 outColor;
 
-void main() {
-  vec3 s2l = normalize(u_lightPos - world_pos);
+uniform sampler2D u_texture;
 
-  float dir = dot(s2l, normalize(u_lightDir));
+vec3 pointlight(){
+  vec3 s2l = normalize(u_pointlightPos - world_pos);
+  float light = dot(s2l, normalize(v_normal));
+
+  return vec3(v_color * light);
+}
+
+vec3 spotlight(){
+  vec3 s2l = normalize(u_spotlightPos - world_pos);
+
+  float dir = dot(s2l, normalize(u_spotlightDir));
   float light = 0.0;
 
   if(dir >= .3){
     light = dot(s2l, normalize(v_normal));
   }
-  outColor = vec4(v_color * light, 1.0);
+
+  return vec3(v_color * light);
+}
+
+vec3 dirlight(){
+  float light = max(dot(normalize(v_normal), -normalize(u_dirlightDir)), .3);
+
+  return vec3(v_color * light);
+}
+
+void main(){
+
+  vec3 color = vec3(0.0);
+  color += dirlight();
+  color += pointlight();
+  color += spotlight();
+
+  outColor = vec4(color, 1.0); 
+}
+`;
+
+const specularShaderSource = `
+#version 300 es
+precision highp float;
+
+uniform vec3 u_pointlightPos;
+uniform vec3 u_spotlightDir;
+uniform vec3 u_spotlightPos;
+uniform vec3 u_dirlightDir;
+
+in vec3 v_color;
+in vec3 v_normal;
+in vec2 v_tex;
+in vec3 world_pos;
+
+out vec4 outColor;
+
+uniform sampler2D u_texture;
+
+vec3 pointlight(){
+  vec3 s2l = normalize(u_pointlightPos - world_pos);
+  float light = dot(s2l, normalize(v_normal));
+
+  return vec3(v_color * light);
+}
+
+vec3 spotlight(){
+  vec3 s2l = normalize(u_spotlightPos - world_pos);
+
+  float dir = dot(s2l, normalize(u_spotlightDir));
+  float light = 0.0;
+
+  if(dir >= .3){
+    light = dot(s2l, normalize(v_normal));
+  }
+
+  return vec3(v_color * light);
+}
+
+vec3 dirlight(){
+  float light = max(dot(normalize(v_normal), -normalize(u_dirlightDir)), .3);
+
+  return vec3(v_color * light);
+}
+
+void main(){
+
+  vec3 color = vec3(0.0);
+  color += dirlight();
+  color += pointlight();
+  color += spotlight();
+
+  outColor = vec4(color, 1.0); 
 }
 `;
 
@@ -74,7 +141,7 @@ const pointShaderSource = `
 #version 300 es
 precision highp float;
 
-uniform vec3 u_lightPos;
+uniform vec3 u_pointlightPos;
 
 in vec3 v_color;
 in vec3 v_normal;
@@ -82,7 +149,7 @@ in vec3 world_pos;
 out vec4 outColor;
 
 void main() {
-  vec3 s2l = normalize(u_lightPos - world_pos);
+  vec3 s2l = normalize(u_pointlightPos - world_pos);
   float light = dot(s2l, normalize(v_normal));
   outColor = vec4(v_color * light, 1.0);
 }
@@ -92,16 +159,54 @@ const textureShaderSource = `
 #version 300 es
 precision highp float;
 
+uniform vec3 u_pointlightPos;
+uniform vec3 u_spotlightDir;
+uniform vec3 u_spotlightPos;
+uniform vec3 u_dirlightDir;
+
 in vec3 v_color;
 in vec3 v_normal;
 in vec2 v_tex;
+in vec3 world_pos;
 
 out vec4 outColor;
 
 uniform sampler2D u_texture;
 
+vec3 pointlight(){
+  vec3 s2l = normalize(u_pointlightPos - world_pos);
+  float light = dot(s2l, normalize(v_normal));
+
+  return vec3(texture(u_texture, v_tex) * light);
+}
+
+vec3 spotlight(){
+  vec3 s2l = normalize(u_spotlightPos - world_pos);
+
+  float dir = dot(s2l, normalize(u_spotlightDir));
+  float light = 0.0;
+
+  if(dir >= .3){
+    light = dot(s2l, normalize(v_normal));
+  }
+
+  return vec3(texture(u_texture, v_tex) * light);
+}
+
+vec3 dirlight(){
+  float light = max(dot(normalize(v_normal), -normalize(u_dirlightDir)), .3);
+
+  return vec3(texture(u_texture, v_tex) * light);
+}
+
 void main(){
-  outColor = texture(u_texture, v_texcoord);
+
+  vec3 color = vec3(0.0);
+  color += dirlight();
+  color += pointlight();
+  color += spotlight();
+
+  outColor = vec4(color, 1.0); 
 }
 `;
 
