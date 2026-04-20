@@ -148,24 +148,6 @@ void main(){
 }
 `;
 
-const pointShaderSource = `
-#version 300 es
-precision highp float;
-
-uniform vec3 u_pointlightPos;
-
-in vec3 v_color;
-in vec3 v_normal;
-in vec3 world_pos;
-out vec4 outColor;
-
-void main() {
-  vec3 s2l = normalize(u_pointlightPos - world_pos);
-  float light = dot(s2l, normalize(v_normal));
-  outColor = vec4(v_color * light, 1.0);
-}
-`;
-
 const textureShaderSource = `
 #version 300 es
 precision highp float;
@@ -218,16 +200,5 @@ void main(){
   color += spotlight();
 
   outColor = vec4(color, 1.0); 
-}
-`;
-
-const fragmentShaderSource = `#version 300 es
-precision highp float;
-
-in vec3 v_color;
-out vec4 outColor;
-
-void main() {
-  outColor = vec4(v_color, 1.0);
 }
 `;
